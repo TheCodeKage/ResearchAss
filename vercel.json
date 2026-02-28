@@ -1,7 +1,9 @@
 {
   "functions": {
     "main.py": {
-      "region": "sin1"
+      "memory": 1024,
+      "maxDuration": 10
     }
-  }
+  },
+  "regions": ["sin1"]
 }
