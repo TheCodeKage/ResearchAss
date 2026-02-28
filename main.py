@@ -7,7 +7,11 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
-origins = ["*"]
+origins = [
+    "http://localhost:3000",
+    "https://your-research-ass.vercel.app",
+    "http://localhost:5173",
+]
 
 app.add_middleware(
     CORSMiddleware,
