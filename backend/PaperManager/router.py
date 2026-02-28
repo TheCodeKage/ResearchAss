@@ -225,10 +225,10 @@ async def chatbot(
         role="user",
         content=request.message
     )
-    db.add(request.message)
+    db.add(user_message)
     await db.commit()
 
-    ai_reply = await call_chatbot_api(user_message)
+    ai_reply = await call_chatbot_api(request.message)
     assistant_message = ChatMessage(
         paper_id=paper_id,
         role="assistant",
