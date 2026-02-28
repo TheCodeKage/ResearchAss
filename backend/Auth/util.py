@@ -9,7 +9,8 @@ from pwdlib import PasswordHash
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.database import get_db
-from schemas import *
+from . import User
+from .schemas import *
 
 # to get a string like this run:
 # openssl rand -hex 32
