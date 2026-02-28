@@ -35,9 +35,7 @@ class ChatMessage(Base):
     __tablename__ = "chat_messages"
 
     id = Column(Integer, primary_key=True)
-    paper_id = Column(Integer, ForeignKey("research_papers.id"))
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     role = Column(String)
     content = Column(Text)
     created_at = Column(DateTime, default=datetime.now)
-
-    paper = relationship("ResearchPaper", backref="chat_messages")

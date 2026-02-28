@@ -25,7 +25,6 @@ async def upload_paper(
         current_user: User = Depends(get_current_user),
         db: AsyncSession = Depends(get_db)
 ):
-
     UPLOAD_DIR.mkdir(exist_ok=True)
     content = await file.read()
     print("Content type:", file.content_type)
@@ -70,7 +69,7 @@ async def upload_paper(
             file_path=None,
             content_json=json_data,
             file_type="editor_json",
-            user_id = current_user.id,
+            user_id=current_user.id,
         )
 
     else:
@@ -85,6 +84,7 @@ async def upload_paper(
 
     return {"id": paper.id}
 
+
 @router.post("/{paper_id}/analyze")
 async def analyze_paper(
         paper_id: int,
@@ -92,7 +92,6 @@ async def analyze_paper(
         current_user: User = Depends(get_current_user),
         db: AsyncSession = Depends(get_db)
 ):
-
     result = await db.execute(
         select(ResearchPaper)
         .where(
@@ -125,7 +124,6 @@ async def get_insights(
         db: AsyncSession = Depends(get_db),
         current_user: User = Depends(get_current_user)
 ):
-
     result = await db.execute(
         select(AIInsight).where(AIInsight.paper_id == paper_id and AIInsight.paper.user_id == current_user.id)
     )
@@ -140,7 +138,6 @@ async def view_paper(
         db: AsyncSession = Depends(get_db),
         current_user: User = Depends(get_current_user)
 ):
-
     result = await db.execute(
         select(ResearchPaper)
         .where(
@@ -180,7 +177,6 @@ async def view_paper(
 
 @router.get("")
 async def list_papers(db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
-
     result = await db.execute(select(ResearchPaper).where(ResearchPaper.user_id == current_user.id))
     papers = result.scalars().all()
 
@@ -201,27 +197,15 @@ async def list_papers(db: AsyncSession = Depends(get_db), current_user: User = D
 
     return response
 
-@router.post("/{paper_id}/chatbot/")
+
+@router.post("/chatbot/")
 async def chatbot(
-        paper_id: int,
         request: ChatRequest,
         db: AsyncSession = Depends(get_db),
         current_user: User = Depends(get_current_user)
 ):
-
-    result = await db.execute(
-        select(ResearchPaper)
-        .where(
-            ResearchPaper.id == paper_id,
-            ResearchPaper.user_id == current_user.id
-        )
-    )
-    paper = result.scalars().first()
-    if not paper:
-        raise HTTPException(status_code=404, detail="Paper not found")
-
     user_message = ChatMessage(
-        paper_id=paper_id,
+        user_id=current_user.id,
         role="user",
         content=request.message
     )
@@ -230,7 +214,7 @@ async def chatbot(
 
     ai_reply = await call_chatbot_api(request.message)
     assistant_message = ChatMessage(
-        paper_id=paper_id,
+        user_id=current_user.id,
         role="assistant",
         content=ai_reply
     )
@@ -240,28 +224,14 @@ async def chatbot(
     return {"response": ai_reply}
 
 
-@router.get("/{paper_id}/chatbot/")
+@router.get("/chatbot/")
 async def chat_history(
-        paper_id: int,
         db: AsyncSession = Depends(get_db),
         current_user: User = Depends(get_current_user)
 ):
-
-    result = await db.execute(
-        select(ResearchPaper)
-        .where(
-            ResearchPaper.id == paper_id,
-            ResearchPaper.user_id == current_user.id
-        )
-    )
-    paper = result.scalars().first()
-
-    if not paper:
-        raise HTTPException(status_code=404, detail="Paper not found")
-
     result = await db.execute(
         select(ChatMessage)
-        .where(ChatMessage.paper_id == paper_id and ChatMessage.paper.user_id == current_user.id)
+        .where(ChatMessage.user_id == current_user.id)
         .order_by(ChatMessage.created_at)
     )
     messages = result.scalars().all()
