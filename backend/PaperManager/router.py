@@ -9,7 +9,7 @@ from pathlib import Path
 
 from .models import ResearchPaper, AIInsight, ChatMessage
 from backend.database import get_db
-from .util import process_ai, call_chatbot_api
+from .util import process_ai, call_chatbot_api, get_file_from_paper, get_paper_or_404
 from .schemas import ChatRequest
 
 from backend.Auth import User, get_current_user
@@ -92,16 +92,7 @@ async def analyze_paper(
         current_user: User = Depends(get_current_user),
         db: AsyncSession = Depends(get_db)
 ):
-    result = await db.execute(
-        select(ResearchPaper)
-        .where(
-            ResearchPaper.id == paper_id,
-            ResearchPaper.user_id == current_user.id
-        )
-    )
-    paper = result.scalars().first()
-    if not paper:
-        raise HTTPException(status_code=404, detail="Paper not found")
+    paper = await get_paper_or_404(paper_id, current_user.id, db)
 
     if paper.analysis_status == "processing":
         return {"message": "Already processing"}
@@ -138,41 +129,9 @@ async def view_paper(
         db: AsyncSession = Depends(get_db),
         current_user: User = Depends(get_current_user)
 ):
-    result = await db.execute(
-        select(ResearchPaper)
-        .where(
-            ResearchPaper.id == paper_id,
-            ResearchPaper.user_id == current_user.id
-        )
-    )
-    paper = result.scalars().first()
+    paper = await get_paper_or_404(paper_id, current_user.id, db)
 
-    # -------------------
-    # CASE 1: PDF
-    # -------------------
-
-    if paper.file_type == "pdf":
-
-        file_path = UPLOAD_DIR / paper.file_path
-
-        if not file_path.exists():
-            raise HTTPException(status_code=404, detail="File not found on disk")
-
-        return FileResponse(
-            path=file_path,
-            media_type="application/pdf",
-            filename=paper.filename
-        )
-
-    # -------------------
-    # CASE 2: Editor JSON
-    # -------------------
-
-    elif paper.file_type == "editor_json":
-        return paper.content_json
-
-    else:
-        raise HTTPException(status_code=400, detail="Unsupported file type")
+    return await get_file_from_paper(paper)
 
 
 @router.get("")
@@ -212,7 +171,7 @@ async def chatbot(
     db.add(user_message)
     await db.commit()
 
-    ai_reply = await call_chatbot_api(request.message)
+    ai_reply = await call_chatbot_api(current_user.id, request.message)
     assistant_message = ChatMessage(
         user_id=current_user.id,
         role="assistant",
