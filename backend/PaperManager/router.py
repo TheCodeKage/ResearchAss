@@ -118,13 +118,18 @@ async def get_insights(
     # 1. Verify paper exists and belongs to user
     await get_paper_or_404(paper_id, current_user.id, db)
 
-    # 2. Get insights for that verified paper
+    # 2. Get the AIInsight object
     result = await db.execute(
         select(AIInsight).where(AIInsight.paper_id == paper_id)
     )
-    insights = result.scalars().all()
+    insight = result.scalars().first()
 
-    return [insight.summary for insight in insights]
+    # 3. Return the JSON content directly, or an empty dict if None
+    if not insight:
+        return {}
+
+    # 4. Return the summary field specifically
+    return insight.summary
 
 
 @router.get("/{paper_id}")
