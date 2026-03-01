@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from fastapi.responses import FileResponse
 
+import backend.PaperManager.temp
 from backend.PaperManager import ResearchPaper, AIInsight
 
 UPLOAD_DIR = Path("uploads")
@@ -57,7 +58,7 @@ async def get_file_from_paper(paper: ResearchPaper)->FileResponse:
 
 async def call_ai_api(*args):
 
-    return "hi" #requests.post(URL+"/process-research")
+    return backend.PaperManager.temp.hi #requests.post(URL+"/process-research")
 
 
 async def process_ai(paper_id: int):

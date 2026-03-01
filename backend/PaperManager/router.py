@@ -115,8 +115,12 @@ async def get_insights(
         db: AsyncSession = Depends(get_db),
         current_user: User = Depends(get_current_user)
 ):
+    # 1. Verify paper exists and belongs to user
+    await get_paper_or_404(paper_id, current_user.id, db)
+
+    # 2. Get insights for that verified paper
     result = await db.execute(
-        select(AIInsight).where(AIInsight.paper_id == paper_id and AIInsight.paper.user_id == current_user.id)
+        select(AIInsight).where(AIInsight.paper_id == paper_id)
     )
     insights = result.scalars().all()
 
